@@ -1,0 +1,35 @@
+{
+  "name": "Planner Semanal",
+  "short_name": "Planner",
+  "description": "Organizador semanal de tareas y actividades",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#378ADD",
+  "orientation": "portrait-or-landscape",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23378ADD' width='192' height='192'/><text x='50%' y='50%' font-size='120' font-weight='bold' fill='white' text-anchor='middle' dy='.3em'>P</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect fill='%23378ADD' width='512' height='512'/><text x='50%' y='50%' font-size='300' font-weight='bold' fill='white' text-anchor='middle' dy='.3em'>P</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><rect fill='%23f5f4f0' width='540' height='720'/><rect fill='%23B5D4F4' x='20' y='60' width='500' height='100'/><rect fill='%23C0DD97' x='20' y='170' width='500' height='100'/><rect fill='%23F5C4B3' x='20' y='280' width='500' height='100'/></svg>",
+      "sizes": "540x720",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ],
+  "categories": ["productivity"],
+  "screenshots": []
+}
