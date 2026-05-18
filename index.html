@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#378ADD">
+<meta name="description" content="Organizador semanal de tareas y actividades">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23378ADD' width='192' height='192'/><text x='50%' y='50%' font-size='120' font-weight='bold' fill='white' text-anchor='middle' dy='.3em'>P</text></svg>">
+<title>Planner Semanal</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #ffffff; --bg2: #f5f4f0; --bg3: #eeedea;
+  --text: #1a1a18; --text2: #5f5e5a; --text3: #888780;
+  --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+  --radius: 8px; --radius-lg: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1e1e1c; --bg2: #2c2c2a; --bg3: #383836;
+    --text: #f0ede8; --text2: #b4b2a9; --text3: #888780;
+    --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+  }
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; padding: 1rem; }
+h1 { font-size: 18px; font-weight: 500; margin-bottom: 0.25rem; color: var(--text); }
+.subtitle { font-size: 12px; color: var(--text3); margin-bottom: 1rem; }
+.toolbar { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+button { font-size: 12px; padding: 5px 12px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg); color: var(--text); cursor: pointer; }
+button:hover { background: var(--bg2); }
+.saved-badge { font-size: 11px; color: var(--text3); }
+.wrapper { overflow-x: auto; }
+.grid { display: grid; grid-template-columns: 100px repeat(7, minmax(100px, 1fr)); gap: 2px; min-width: 820px; }
+.header { background: var(--bg2); padding: 6px 4px; text-align: center; font-weight: 500; color: var(--text); border-radius: var(--radius); font-size: 11px; }
+.time-label { padding: 4px 6px; color: var(--text3); font-size: 10px; display: flex; align-items: center; justify-content: flex-end; text-align: right; line-height: 1.3; }
+.cell { min-height: 48px; border-radius: 4px; padding: 5px 6px; display: flex; flex-direction: column; justify-content: flex-start; border: 0.5px solid transparent; position: relative; }
+.cell-label { font-size: 11px; font-weight: 500; line-height: 1.3; outline: none; min-height: 14px; }
+.cell-note { font-size: 10px; opacity: 0.75; line-height: 1.2; margin-top: 2px; outline: none; min-height: 12px; }
+.cell-label:focus, .cell-note:focus { opacity: 1; }
+.cell-select { display: none; position: absolute; bottom: 4px; right: 4px; font-size: 10px; padding: 1px 3px; border-radius: 4px; border: 0.5px solid var(--border2); background: var(--bg); color: var(--text); z-index: 10; max-width: 120px; }
+.cell:hover .cell-select { display: block; }
+
+.cat-trabajo { background: #B5D4F4; border-color: #378ADD; }
+.cat-trabajo .cell-label { color: #042C53; }
+.cat-trabajo .cell-note { color: #185FA5; }
+.cat-alimentacion { background: #C0DD97; border-color: #639922; }
+.cat-alimentacion .cell-label { color: #173404; }
+.cat-alimentacion .cell-note { color: #3B6D11; }
+.cat-ejercicio { background: #F5C4B3; border-color: #D85A30; }
+.cat-ejercicio .cell-label { color: #4A1B0C; }
+.cat-ejercicio .cell-note { color: #993C1D; }
+.cat-piano { background: #CECBF6; border-color: #7F77DD; }
+.cat-piano .cell-label { color: #26215C; }
+.cat-piano .cell-note { color: #534AB7; }
+.cat-ajedrez { background: #F4C0D1; border-color: #D4537E; }
+.cat-ajedrez .cell-label { color: #4B1528; }
+.cat-ajedrez .cell-note { color: #993556; }
+.cat-lectura { background: #FAC775; border-color: #BA7517; }
+.cat-lectura .cell-label { color: #412402; }
+.cat-lectura .cell-note { color: #854F0B; }
+.cat-escritura { background: #9FE1CB; border-color: #1D9E75; }
+.cat-escritura .cell-label { color: #04342C; }
+.cat-escritura .cell-note { color: #0F6E56; }
+.cat-descanso { background: #D3D1C7; border-color: #888780; }
+.cat-descanso .cell-label { color: #2C2C2A; }
+.cat-descanso .cell-note { color: #5F5E5A; }
+.cat-gestion { background: #F7C1C1; border-color: #E24B4A; }
+.cat-gestion .cell-label { color: #501313; }
+.cat-gestion .cell-note { color: #A32D2D; }
+.cat-empty { background: var(--bg2); border-color: var(--border); }
+.cat-empty .cell-label { color: var(--text3); }
+.cat-empty .cell-note { color: var(--text3); }
+
+@media (prefers-color-scheme: dark) {
+  .cat-trabajo { background: #0C447C; border-color: #185FA5; }
+  .cat-trabajo .cell-label { color: #B5D4F4; } .cat-trabajo .cell-note { color: #85B7EB; }
+  .cat-alimentacion { background: #27500A; border-color: #3B6D11; }
+  .cat-alimentacion .cell-label { color: #C0DD97; } .cat-alimentacion .cell-note { color: #97C459; }
+  .cat-ejercicio { background: #712B13; border-color: #993C1D; }
+  .cat-ejercicio .cell-label { color: #F5C4B3; } .cat-ejercicio .cell-note { color: #F0997B; }
+  .cat-piano { background: #3C3489; border-color: #534AB7; }
+  .cat-piano .cell-label { color: #CECBF6; } .cat-piano .cell-note { color: #AFA9EC; }
+  .cat-ajedrez { background: #72243E; border-color: #993556; }
+  .cat-ajedrez .cell-label { color: #F4C0D1; } .cat-ajedrez .cell-note { color: #ED93B1; }
+  .cat-lectura { background: #633806; border-color: #854F0B; }
+  .cat-lectura .cell-label { color: #FAC775; } .cat-lectura .cell-note { color: #EF9F27; }
+  .cat-escritura { background: #085041; border-color: #0F6E56; }
+  .cat-escritura .cell-label { color: #9FE1CB; } .cat-escritura .cell-note { color: #5DCAA5; }
+  .cat-descanso { background: #444441; border-color: #5F5E5A; }
+  .cat-descanso .cell-label { color: #D3D1C7; } .cat-descanso .cell-note { color: #B4B2A9; }
+  .cat-gestion { background: #791F1F; border-color: #A32D2D; }
+  .cat-gestion .cell-label { color: #F7C1C1; } .cat-gestion .cell-note { color: #F09595; }
+}
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 1rem; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<h1>Planner Semanal</h1>
+<p class="subtitle">Haz clic en cualquier celda para editar. Pasa el cursor para cambiar categoría.</p>
+
+<div class="toolbar">
+  <button onclick="resetAll()">Restaurar original</button>
+  <button onclick="clearAll()">Limpiar todo</button>
+  <button onclick="exportJSON()">Exportar datos</button>
+  <label style="font-size:12px; color:var(--text2);">Importar: <input type="file" accept=".json" onchange="importJSON(event)" style="font-size:11px;"></label>
+  <span class="saved-badge" id="savedBadge"></span>
+</div>
+
+<div class="wrapper">
+  <div class="grid" id="mainGrid"></div>
+</div>
+<div class="legend" id="legend"></div>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js')
+    .then(reg => console.log('Service Worker registrado'))
+    .catch(err => console.log('Error registrando SW:', err));
+}
+
+const days = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+const slots = [
+  { time: '6:00–7:00', label: 'Mañana temprana' },
+  { time: '7:30–2:30', label: 'Trabajo (escuela)' },
+  { time: '3:15–4:00', label: 'Llegada + comida' },
+  { time: '4:00–4:30', label: 'Siesta' },
+  { time: '4:30–5:15', label: 'Ejercicio' },
+  { time: '5:15–6:00', label: 'Piano' },
+  { time: '6:00–6:45', label: 'Ajedrez' },
+  { time: '6:45–7:30', label: 'Escritura / libro' },
+  { time: '7:30–8:15', label: 'Lectura recreativa' },
+  { time: '8:15–9:00', label: 'Gestión personal' },
+  { time: '9:00–9:30', label: 'Preparación mañana' },
+];
+const catClasses = { trabajo:'cat-trabajo', alimentacion:'cat-alimentacion', ejercicio:'cat-ejercicio', piano:'cat-piano', ajedrez:'cat-ajedrez', lectura:'cat-lectura', escritura:'cat-escritura', descanso:'cat-descanso', gestion:'cat-gestion', empty:'cat-empty' };
+const catLabels = { trabajo:'Trabajo / docente', alimentacion:'Alimentación', ejercicio:'Ejercicio', piano:'Piano', ajedrez:'Ajedrez', lectura:'Lectura', escritura:'Escritura', descanso:'Descanso', gestion:'Gestión personal', empty:'Vacío' };
+
+const defaultData = {
+  '0-0':{cat:'empty',label:'',note:''},'1-0':{cat:'empty',label:'',note:''},'2-0':{cat:'empty',label:'',note:''},'3-0':{cat:'empty',label:'',note:''},'4-0':{cat:'empty',label:'',note:''},'5-0':{cat:'alimentacion',label:'Desayuno',note:'Antes de salir'},'6-0':{cat:'alimentacion',label:'Desayuno',note:'Antes de salir'},
+  '0-1':{cat:'trabajo',label:'Clases + planeación',note:'Correos en huecos'},'1-1':{cat:'trabajo',label:'Clases + planeación',note:'Llamadas Bradescard/Mega'},'2-1':{cat:'trabajo',label:'Clases + evaluación',note:'Revisar proyectos'},'3-1':{cat:'trabajo',label:'Clases + evaluación',note:'Revisar proyectos'},'4-1':{cat:'trabajo',label:'Clases + planeación',note:'Herramientas PDF'},'5-1':{cat:'empty',label:'',note:''},'6-1':{cat:'empty',label:'',note:''},
+  '0-2':{cat:'alimentacion',label:'Comida',note:'Al llegar'},'1-2':{cat:'alimentacion',label:'Comida',note:'Al llegar'},'2-2':{cat:'alimentacion',label:'Comida',note:'Al llegar'},'3-2':{cat:'alimentacion',label:'Comida',note:'Al llegar'},'4-2':{cat:'alimentacion',label:'Comida',note:'Al llegar'},'5-2':{cat:'alimentacion',label:'Comida',note:'En casa'},'6-2':{cat:'alimentacion',label:'Comida',note:'En casa'},
+  '0-3':{cat:'descanso',label:'Siesta',note:'20–30 min'},'1-3':{cat:'descanso',label:'Siesta',note:'20–30 min'},'2-3':{cat:'descanso',label:'Siesta',note:'20–30 min'},'3-3':{cat:'descanso',label:'Siesta',note:'20–30 min'},'4-3':{cat:'descanso',label:'Siesta',note:'20–30 min'},'5-3':{cat:'descanso',label:'Siesta',note:'Opcional'},'6-3':{cat:'descanso',label:'Siesta',note:'Opcional'},
+  '0-4':{cat:'ejercicio',label:'Ejercicio',note:'30 min'},'1-4':{cat:'ejercicio',label:'Ejercicio',note:'30 min'},'2-4':{cat:'ejercicio',label:'Ejercicio',note:'30 min'},'3-4':{cat:'ejercicio',label:'Ejercicio',note:'30 min'},'4-4':{cat:'ejercicio',label:'Ejercicio',note:'30 min'},'5-4':{cat:'ejercicio',label:'Ejercicio',note:'Más tiempo'},'6-4':{cat:'descanso',label:'Descanso activo',note:'Caminar, salir'},
+  '0-5':{cat:'piano',label:'Piano',note:'Repertorio activo'},'1-5':{cat:'piano',label:'Piano',note:'Libro 100 partituras'},'2-5':{cat:'piano',label:'Piano',note:'Repertorio activo'},'3-5':{cat:'piano',label:'Piano',note:'Libro 100 partituras'},'4-5':{cat:'piano',label:'Piano',note:'Repertorio activo'},'5-5':{cat:'piano',label:'Piano',note:'Sesión larga'},'6-5':{cat:'empty',label:'',note:''},
+  '0-6':{cat:'ajedrez',label:'Ajedrez',note:'Vienna (blancas)'},'1-6':{cat:'ajedrez',label:'Ajedrez',note:'Francesa (negras)'},'2-6':{cat:'ajedrez',label:'Ajedrez',note:'Vienna + partidas'},'3-6':{cat:'ajedrez',label:'Ajedrez',note:'Francesa + partidas'},'4-6':{cat:'ajedrez',label:'Ajedrez',note:'Táctica / puzzles'},'5-6':{cat:'ajedrez',label:'Ajedrez',note:'Partidas rápidas'},'6-6':{cat:'empty',label:'',note:''},
+  '0-7':{cat:'escritura',label:'Libro ex-TJ',note:'45 min enfocados'},'1-7':{cat:'escritura',label:'Libro ex-TJ',note:'45 min enfocados'},'2-7':{cat:'escritura',label:'Libro ex-TJ',note:'45 min enfocados'},'3-7':{cat:'escritura',label:'Libro ex-TJ',note:'45 min enfocados'},'4-7':{cat:'escritura',label:'Libro ex-TJ',note:'45 min enfocados'},'5-7':{cat:'escritura',label:'Escritura libre',note:''},'6-7':{cat:'descanso',label:'Tiempo libre',note:''},
+  '0-8':{cat:'lectura',label:'Lectura',note:'Recreativa'},'1-8':{cat:'lectura',label:'Lectura',note:'Recreativa'},'2-8':{cat:'lectura',label:'Lectura',note:'Recreativa'},'3-8':{cat:'lectura',label:'Lectura',note:'Recreativa'},'4-8':{cat:'lectura',label:'Lectura',note:'Recreativa'},'5-8':{cat:'lectura',label:'Lectura',note:'Sesión larga'},'6-8':{cat:'lectura',label:'Lectura',note:'Sesión larga'},
+  '0-9':{cat:'gestion',label:'Gestión',note:'Avión/hotel, pendientes'},'1-9':{cat:'gestion',label:'Gestión',note:'Pendientes semana'},'2-9':{cat:'gestion',label:'Cuarto',note:'Organizar / limpiar'},'3-9':{cat:'gestion',label:'Gestión',note:'Pendientes'},'4-9':{cat:'gestion',label:'Gestión',note:'Pendientes'},'5-9':{cat:'gestion',label:'Cuarto',note:'Limpieza profunda'},'6-9':{cat:'empty',label:'',note:''},
+  '0-10':{cat:'trabajo',label:'Preparación clases',note:'Materiales del día'},'1-10':{cat:'trabajo',label:'Preparación clases',note:'Materiales del día'},'2-10':{cat:'trabajo',label:'Preparación clases',note:'Materiales del día'},'3-10':{cat:'trabajo',label:'Preparación clases',note:'Materiales del día'},'4-10':{cat:'trabajo',label:'Preparación clases',note:'Materiales del día'},'5-10':{cat:'empty',label:'',note:''},'6-10':{cat:'descanso',label:'Descanso',note:'Sin compromisos'},
+};
+
+let data = loadData();
+let saveTimer;
+
+function loadData() {
+  try {
+    const saved = localStorage.getItem('semana_planner_v1');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return JSON.parse(JSON.stringify(defaultData));
+}
+
+function saveData() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem('semana_planner_v1', JSON.stringify(data));
+      const badge = document.getElementById('savedBadge');
+      badge.textContent = 'Guardado';
+      setTimeout(() => badge.textContent = '', 2000);
+    } catch(e) {}
+  }, 600);
+}
+
+function renderGrid() {
+  const grid = document.getElementById('mainGrid');
+  grid.innerHTML = '';
+  const corner = document.createElement('div');
+  corner.className = 'header';
+  corner.textContent = 'Horario';
+  grid.appendChild(corner);
+  days.forEach(d => {
+    const h = document.createElement('div');
+    h.className = 'header';
+    h.textContent = d;
+    grid.appendChild(h);
+  });
+  slots.forEach((slot, si) => {
+    const tl = document.createElement('div');
+    tl.className = 'time-label';
+    tl.title = slot.label;
+    tl.textContent = slot.time;
+    grid.appendChild(tl);
+    days.forEach((_, di) => {
+      const id = di + '-' + si;
+      const d = data[id] || { cat:'empty', label:'', note:'' };
+      const cell = document.createElement('div');
+      cell.className = 'cell ' + (catClasses[d.cat] || 'cat-empty');
+
+      const lbl = document.createElement('div');
+      lbl.className = 'cell-label';
+      lbl.contentEditable = true;
+      lbl.textContent = d.label;
+      lbl.addEventListener('input', () => { data[id].label = lbl.textContent; saveData(); });
+
+      const note = document.createElement('div');
+      note.className = 'cell-note';
+      note.contentEditable = true;
+      note.textContent = d.note;
+      note.addEventListener('input', () => { data[id].note = note.textContent; saveData(); });
+
+      const sel = document.createElement('select');
+      sel.className = 'cell-select';
+      Object.entries(catLabels).forEach(([k, v]) => {
+        const opt = document.createElement('option');
+        opt.value = k;
+        opt.textContent = v;
+        if (k === d.cat) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      sel.addEventListener('change', () => {
+        data[id].cat = sel.value;
+        cell.className = 'cell ' + (catClasses[sel.value] || 'cat-empty');
+        saveData();
+      });
+
+      cell.appendChild(lbl);
+      cell.appendChild(note);
+      cell.appendChild(sel);
+      grid.appendChild(cell);
+    });
+  });
+  renderLegend();
+}
+
+function renderLegend() {
+  const leg = document.getElementById('legend');
+  leg.innerHTML = '';
+  const shown = new Set(Object.values(data).map(d => d.cat).filter(c => c && c !== 'empty'));
+  const colorMap = { trabajo:'#378ADD', alimentacion:'#639922', ejercicio:'#D85A30', piano:'#7F77DD', ajedrez:'#D4537E', lectura:'#BA7517', escritura:'#1D9E75', descanso:'#888780', gestion:'#E24B4A' };
+  shown.forEach(cat => {
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    const dot = document.createElement('div');
+    dot.className = 'legend-dot';
+    dot.style.background = colorMap[cat] || '#ccc';
+    const txt = document.createElement('span');
+    txt.textContent = catLabels[cat];
+    item.appendChild(dot);
+    item.appendChild(txt);
+    leg.appendChild(item);
+  });
+}
+
+function resetAll() {
+  if (!confirm('¿Restaurar el planner al estado original? Se perderán los cambios.')) return;
+  data = JSON.parse(JSON.stringify(defaultData));
+  localStorage.setItem('semana_planner_v1', JSON.stringify(data));
+  renderGrid();
+}
+
+function clearAll() {
+  if (!confirm('¿Limpiar todas las celdas?')) return;
+  Object.keys(data).forEach(k => { data[k] = { cat:'empty', label:'', note:'' }; });
+  saveData();
+  renderGrid();
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'planner_semana.json';
+  a.click();
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      data = JSON.parse(e.target.result);
+      saveData();
+      renderGrid();
+    } catch(err) {
+      alert('Archivo inválido.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+renderGrid();
+</script>
+</body>
+</html>
